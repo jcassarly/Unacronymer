@@ -1,2 +1,2 @@
 with open("/tmp/text.txt", "w") as out:
-    out.write("Hello World Sandy")
+    out.write("Hello World Nick")

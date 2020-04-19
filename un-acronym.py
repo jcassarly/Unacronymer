@@ -3,7 +3,7 @@ import re
 
 class Buffer():
 
-    SIZE = 255
+    SIZE = 256
 
     def __init__(self):
         self.__buffer = []
@@ -16,6 +16,9 @@ class Buffer():
 
     def get(self, index):
         return self.__buffer[index]
+    
+    def is_in_bounds(self,index):
+        return (index >= 0 and index < self.SIZE)
 
     def get_from_end(self, index_from_end):
         return self.__buffer[len(self.__buffer) - 1 - index_from_end]
@@ -78,8 +81,15 @@ class Unacronym():
     def match_acronym(self, acronym):
         """Returns none if no match, otherwise returns the matched def
         """
-        for char in reverse(acronym):
-            pass
+        acronym_index = len(acronym) - 1
+        buffer_index = 1
+        definition = ""
+        while acronym_index >= 0 and self.__buffer.is_in_bounds(buffer_index):
+            next_word = self.__buffer.get_from_end(buffer_index)
+            if next_word.startswith(acronym[acronym_index]):
+                definition = "{} {}"
+                
+            
 
     def build_dictionary(self):
         with open(self.PREPROCESS_FILENAME, "r") as input_file:

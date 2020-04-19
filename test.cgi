@@ -2,7 +2,7 @@
 BEGIN {
     print "Content-type:text/html\n"
 
-
+    print "<head>"
     print "<style>"
     print "div {"
     print "    display: inline-block;"
@@ -11,10 +11,12 @@ BEGIN {
     print "    display: block;"
     print "}"
     print "<style/>"
+    print "<head/>"
 
 
-    print "<H1>The Magical Un-Acronymer</H1>"
+ 
     print "<body style='background-color:powderblue;'>"
+    print "<H1>The Magical Un-Acronymer</H1>"
 
     system("python /home/jwc160/public_html/cgi-bin/testdir/test.py")
     print "<div>"

@@ -2,6 +2,17 @@
 BEGIN {
     print "Content-type:text/html\n"
 
+
+    print "<style>"
+    print "div {"
+    print "    display: inline-block;"
+    print "}"
+    print "div label {"
+    print "    display: block;"
+    print "}"
+    print "<style/>"
+
+
     print "<H1>The Magical Un-Acronymer</H1>"
     print "<body style='background-color:powderblue;'>"
 

@@ -134,7 +134,7 @@ class Unacronym():
                 for word in words:
                     self.__buffer.add(word)
 
-                    match = re.fullmatch("\(([A-Z][A-Za-z]*[A-Z])[)]*[:;?.,\"']*", word)
+                    match = re.fullmatch("\(([A-Z][A-Za-z]*[A-Z])[)]*([:;?.,]|(&quot)|(&#39))*", word)
                     if match is not None:
                         acronym = match.group(1)
                         definition = self.match_acronym(acronym)

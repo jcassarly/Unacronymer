@@ -10,8 +10,8 @@ BEGIN {
     print "div label {"
     print "    display: block;"
     print "}"
-    print "<style/>"
-    print "<head/>"
+    print "</style>"
+    print "</head>"
 
 
  
@@ -20,7 +20,7 @@ BEGIN {
 
     system("python /home/jwc160/public_html/cgi-bin/testdir/test.py")
     print "<div>"
-    print "<H3>Enter text here:<H3/>"
+    print "<H3>Enter text here:</H3>"
     print "<form  action='test.cgi' method='post'>"
     print "<textarea id='input_text' name='foo' cols='80' rows='20' placeholder='TEST ME'></textarea>"
     print " <input type = submit>"
@@ -35,14 +35,14 @@ BEGIN {
     system("python3 /home/jwc160/public_html/cgi-bin/testdir/un-acronym.py")
 
     print "<div>"
-    print "<H3>Output:<H3/>"
+    print "<H3>Output:</H3>"
     print "<input type = 'text' id = 'output' value = '"
     while (getline < "/tmp/unacronym-replace")
     {
         print $0
     }
     print "' />"
-    print "<div/>"
+    print "</div>"
 
 }
 

@@ -16,7 +16,7 @@ class Buffer():
 
     def get(self, index):
         return self.__buffer[index]
-    
+
     def is_in_bounds(self,index):
         return (index >= 0 and index < self.SIZE)
 
@@ -82,14 +82,37 @@ class Unacronym():
         """Returns none if no match, otherwise returns the matched def
         """
         acronym_index = len(acronym) - 1
+        last_matched_index = acronym_index
         buffer_index = 1
+        MAX_FAILED_MATCHES = 3
+        failed_matches = 0
         definition = ""
-        while acronym_index >= 0 and self.__buffer.is_in_bounds(buffer_index):
-            next_word = self.__buffer.get_from_end(buffer_index)
-            if next_word.startswith(acronym[acronym_index]):
-                definition = "{} {}"
-                
-            
+        next_word = self.__buffer.get_from_end(buffer_index)
+        while last_matched_index >= 0 and self.__buffer.is_in_bounds(buffer_index):
+            if acronym_index < 0 and failed_matches <= MAX_FAILED_MATCHES:
+                failed_matches = failed_matches + 1
+                buffer_index = buffer_index + 1
+                acronym_index = last_matched_index - 1
+
+                next_word = self.__buffer.get_from_end(buffer_index)
+
+            if next_word.lower().startswith(acronym[acronym_index].lower()):
+                definition = "{} {}".format(next_word, definition)
+
+                failed_matches = 0
+                last_matched_index = acronym_index
+                acronym_index = acronym_index - 1
+                buffer_index = buffer_index + 1
+
+                next_word = self.__buffer.get_from_end(buffer_index)
+
+            # p o s Interface (POSIX)
+            # Lord of of of of of The Rings (LTR)
+            else:
+                acronym_index = acronym_index - 1
+
+
+
 
     def build_dictionary(self):
         with open(self.PREPROCESS_FILENAME, "r") as input_file:

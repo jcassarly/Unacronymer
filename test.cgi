@@ -3,6 +3,7 @@ BEGIN {
     print "Content-type:text/html\n"
 
     print "<head>"
+    print "<style>"
     print "* {"
     print "  box-sizing: border-box;"
     print "  margin:0 auto;"

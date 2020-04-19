@@ -54,7 +54,7 @@ BEGIN {
     system("python /home/jwc160/public_html/cgi-bin/testdir/test.py")
 
     print "<body style='background-color:powderblue;'>"
-<
+
     print "<H1 id='title'>The Magical Un-Acronymer</H1>"
 
     print "<div class='row'>"
@@ -62,7 +62,7 @@ BEGIN {
     print "<div class='column' >"
     print "  <H3 class='columnHead'>Enter text here:</H3>"
     print "  <form action='test.cgi' method='post'>"
-    print "    <textarea class='inputtext' name='foo' placeholder='TEST ME'></textarea>"
+    print "    <textarea class='inputtext' name='in_text' placeholder='TEST ME'></textarea>"
     print "    <input type=submit>"
     print "  </form>"
     print "</div>"

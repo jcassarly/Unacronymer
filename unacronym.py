@@ -17,8 +17,9 @@ class Buffer():
     def get(self, index):
         return self.__buffer[index]
 
-    def is_in_bounds(self,index):
-        return (index >= 0 and index < self.SIZE)
+    def is_index_from_end_in_bounds(self, index_from_end):
+        converted_index = len(self.__buffer) - 1 - index_from_end
+        return (converted_index >= 0 and converted_index < self.SIZE)
 
     def get_from_end(self, index_from_end):
         return self.__buffer[len(self.__buffer) - 1 - index_from_end]
@@ -36,6 +37,9 @@ class AcronymDict(list):
         for acronym in self.acronyms:
             yield acronym, self.dict[acronym]
 
+    def __contains__(self, key):
+        return key in self.acronyms
+
     def add(self, key, value):
         self.acronyms.append(key)
         self.dict[key] = value
@@ -52,17 +56,17 @@ class Unacronym():
 
     REPLACE_DICT = {
 #        "&": "&amp",
-        "<": "&lt",
-        ">": "&gt",
-        "\"": "&quot",
-        "\'": "&#39",
+        "<": "&lt;",
+        ">": "&gt;",
+        "\"": "&quot;",
+        "\'": "&#39;",
     }
 
     def __init__(self):
         self.__buffer = Buffer()
         self.acronyms = AcronymDict()
-        self.acronyms.add("TCB", "TCP Control Block") # TODO: come back to this for how we want to sort the acronyms
-        self.acronyms.add("TCP", "Transport Control Protocol")
+        #self.acronyms.add("TCB", "TCP Control Block") # TODO: come back to this for how we want to sort the acronyms
+        #self.acronyms.add("TCP", "Transport Control Protocol")
 
     def preprocess(self):
         with open(self.PREPROCESS_FILENAME, "w") as output_file:
@@ -70,7 +74,7 @@ class Unacronym():
                 for line in input_file:
 
                     updated_line = urllib.parse.unquote_plus(line)
-                    updated_line = updated_line.replace("&", "&amp")
+                    updated_line = updated_line.replace("&", "&amp;")
 
 
                     for old in self.REPLACE_DICT:
@@ -88,15 +92,21 @@ class Unacronym():
         failed_matches = 0
         definition = ""
         next_word = self.__buffer.get_from_end(buffer_index)
-        while last_matched_index >= 0 and self.__buffer.is_in_bounds(buffer_index):
+        while last_matched_index > 0 and self.__buffer.is_index_from_end_in_bounds(buffer_index) and failed_matches <= MAX_FAILED_MATCHES:
             if acronym_index < 0 and failed_matches <= MAX_FAILED_MATCHES:
                 failed_matches = failed_matches + 1
                 buffer_index = buffer_index + 1
                 acronym_index = last_matched_index - 1
 
+                if not self.__buffer.is_index_from_end_in_bounds(buffer_index):
+                    #print("hi")
+                    return None
+
+                definition = "{} {}".format(next_word, definition)
                 next_word = self.__buffer.get_from_end(buffer_index)
 
-            if next_word.lower().startswith(acronym[acronym_index].lower()):
+            test_word = re.sub("^(([^A-Za-z&])|(&amp)|(&lt)|(&gt)|(&quot)|(&#39))*", "", next_word)
+            if test_word.lower().startswith(acronym[acronym_index].lower()):
                 definition = "{} {}".format(next_word, definition)
 
                 failed_matches = 0
@@ -111,6 +121,7 @@ class Unacronym():
             else:
                 acronym_index = acronym_index - 1
 
+        return definition[0:len(definition) - 1] if last_matched_index == 0 else None
 
 
 
@@ -118,6 +129,7 @@ class Unacronym():
         with open(self.PREPROCESS_FILENAME, "r") as input_file:
             for line in input_file:
                 words = line.split()
+                #words.remove("")
 
                 for word in words:
                     self.__buffer.add(word)
@@ -127,7 +139,7 @@ class Unacronym():
                         acronym = match.group(1)
                         definition = self.match_acronym(acronym)
 
-                        if definition is not None:
+                        if definition is not None and not acronym in self.acronyms:
                             self.acronyms.add(acronym, definition)
 
         self.acronyms.sort() # TODO: sort by acronym length to do longest matching
@@ -141,7 +153,7 @@ class Unacronym():
 
                     # TODO: change color on acronyms that are not in the dictionary
                     for old, replacement in self.acronyms:
-                        updated_line = re.sub("(^|[^>A-Z]){}([^<A-Z]|$)".format(old), r"\1>{}<\2".format(replacement), updated_line)
+                        updated_line = re.sub("(^|[^>A-Z]){}([^<A-Z]|$)".format(old), r"\1<font color='RED'>{} ({})</font>\2".format(replacement, old), updated_line)
 
                     updated_line = updated_line.replace("\n", "<br />")
 
@@ -151,7 +163,9 @@ class Unacronym():
 
 if __name__ == "__main__":
     ua = Unacronym()
+    #print(ua.match_acronym("TCP"))
     ua.preprocess()
+    ua.build_dictionary()
     ua.replace_acronyms()
 
 

@@ -58,10 +58,15 @@ BEGIN {
 
     print "<div class='column' >"
     print "  <H3 class='columnHead'>Enter text here:</H3>"
-    print "  <form action='test.cgi' method='post'>"
+    print "  <form id='yeet' action='test.cgi' method='post'>"
     print "    <textarea class='inputtext' name='in_text' placeholder='TEST ME'></textarea>"
-    print "    <input type=submit>"
     print "  </form>"
+    print "</div>"
+
+    print "<div class='column'>"
+    print "  <center>"
+    print "    <button type='submit' form='yeet'>Unacronym</button>"
+    print "  </center>"
     print "</div>"
 
     getline cgidat

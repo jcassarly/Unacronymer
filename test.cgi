@@ -13,12 +13,12 @@ BEGIN {
     print "  display: flex;"
     print "  margin:0 auto;"
     print "}"
-  
+
     print "#title{"
     print "font-size:60px;"
     print "text-align:center;"
     print "}"
-  
+
     print ".columnHead{"
     print "  font-size:30px;"
     print "  text-align:center;"
@@ -32,11 +32,11 @@ BEGIN {
     print ".inputtext"
     print "{"
     print "  overflow-y: auto;"
-    print "  height:700px;"
+    print "  height:500px;"
     print "  width:500px;"
     print "  font-size:14pt;"
     print "  resize: none;"
-      
+
     print "}"
     print ".outputtext"
     print "{"
@@ -44,14 +44,11 @@ BEGIN {
     print "  background: white;"
     print "  padding: 10px;"
     print "  overflow-y: auto;"
-    print "  height:700px;"
+    print "  height:500px;"
     print "  width:500px;"
     print "}"
     print "</style>"
     print "</head>"
-
-
-    system("python /home/jwc160/public_html/cgi-bin/testdir/test.py")
 
     print "<body style='background-color:powderblue;'>"
 
@@ -73,12 +70,21 @@ BEGIN {
     system("rm /tmp/unacronym-pre")
     system("rm /tmp/unacronym-replace")
     print cgidat > "/tmp/unacronym-in"
-    system("python3 /home/jwc160/public_html/cgi-bin/testdir/unacronym.py")
+    #print "\ufffd" > "/tmp/unacronym-replace"
+    #close("/tmp/unacronym-replace")
+    close("/tmp/unacronym-in")
+    close("/tmp/unacronym-pre")
+    close("/tmp/unacronym-replace")
+
 
     print "<div class='column'>"
     print "  <H3 class='columnHead'>Output:</H3>"
     print "  <div class='outputtext'>"
     print "  <p>"
+    system("python3 /home/jwc160/public_html/cgi-bin/testdir/unacronym.py")
+    #TODO: make sure to verify this file exists
+    #print "\ufffd" > "/tmp/unacronym-replace"
+    #close("/tmp/unacronym-replace")
     while (getline < "/tmp/unacronym-replace")
     {
         print $0

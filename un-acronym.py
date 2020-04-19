@@ -50,7 +50,7 @@ class Unacronym():
     def __init__(self):
         self.__buffer = Buffer()
         self.acronyms = AcronymDict()
-        self.acronyms.add("TCB", "TCP Control Block")
+        self.acronyms.add("TCB", "TCP Control Block") # TODO: come back to this for how we want to sort the acronyms
         self.acronyms.add("TCP", "Transport Control Protocol")
 
     def preprocess(self):

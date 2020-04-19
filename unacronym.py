@@ -86,41 +86,63 @@ class Unacronym():
         """Returns none if no match, otherwise returns the matched def
         """
         acronym_index = len(acronym) - 1
-        last_matched_index = acronym_index
+        last_matched_index = acronym_index # TODO: change this to be the length of the acronym not -1
         buffer_index = 1
         MAX_FAILED_MATCHES = 3
         failed_matches = 0
         definition = ""
+
+        # get the first word before the acronym in the buffer
         next_word = self.__buffer.get_from_end(buffer_index)
-        while last_matched_index > 0 and self.__buffer.is_index_from_end_in_bounds(buffer_index) and failed_matches <= MAX_FAILED_MATCHES:
+
+        # iterate until a definition is found or acronym is found to not have a definiton
+        while last_matched_index > 0 \
+              and self.__buffer.is_index_from_end_in_bounds(buffer_index) \
+              and failed_matches <= MAX_FAILED_MATCHES:
+
+            # if the current word does not match and of the letters that have not been matched
+            # and we have not failed to match a word for MAX_FAILED_MATCHES times
             if acronym_index < 0 and failed_matches <= MAX_FAILED_MATCHES:
+                definition = "{} {}".format(next_word, definition)
+
                 failed_matches = failed_matches + 1
                 buffer_index = buffer_index + 1
+
+                # reset the current index to the index after the last successful match
                 acronym_index = last_matched_index - 1
 
                 if not self.__buffer.is_index_from_end_in_bounds(buffer_index):
-                    #print("hi")
                     return None
 
-                definition = "{} {}".format(next_word, definition)
+                # add the word to the def and go to the next word to try matching that
                 next_word = self.__buffer.get_from_end(buffer_index)
 
+            # ignore non letters at the beginning of the word
             test_word = re.sub("^(([^A-Za-z&])|(&amp)|(&lt)|(&gt)|(&quot)|(&#39))*", "", next_word)
-            if test_word.lower().startswith(acronym[acronym_index].lower()):
-                definition = "{} {}".format(next_word, definition)
 
+            # check if the test word's first letter matches the current index of the acronym
+            if test_word.lower().startswith(acronym[acronym_index].lower()):
+                # reset the failed matches
                 failed_matches = 0
+
+                # we matched at this index, so save that as the last matched
                 last_matched_index = acronym_index
+
                 acronym_index = acronym_index - 1
                 buffer_index = buffer_index + 1
 
+                if not self.__buffer.is_index_from_end_in_bounds(buffer_index):
+                    return None
+
+                # add the matched word to the definition and go to the next word
+                definition = "{} {}".format(next_word, definition)
                 next_word = self.__buffer.get_from_end(buffer_index)
 
-            # p o s Interface (POSIX)
-            # Lord of of of of of The Rings (LTR)
+            # if we dont have a match, try again on the next letter in the acronym
             else:
                 acronym_index = acronym_index - 1
 
+        # return the definition unless we did not find a complete definition match
         return definition[0:len(definition) - 1] if last_matched_index == 0 else None
 
 
@@ -129,7 +151,7 @@ class Unacronym():
         with open(self.PREPROCESS_FILENAME, "r") as input_file:
             for line in input_file:
                 words = line.split()
-                #words.remove("")
+                #words.remove("") #TODO: ignore empty strings
 
                 for word in words:
                     self.__buffer.add(word)

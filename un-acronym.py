@@ -1,4 +1,5 @@
 import urllib.parse
+import re
 
 class Buffer():
 
@@ -16,6 +17,9 @@ class Buffer():
     def get(self, index):
         return self.__buffer[index]
 
+    def get_from_end(self, index_from_end):
+        return self.__buffer[len(self.__buffer) - 1 - index_from_end]
+
     def newest(self):
         return self.__buffer[len(self.__buffer) - 1]
 
@@ -32,6 +36,10 @@ class AcronymDict(list):
     def add(self, key, value):
         self.acronyms.append(key)
         self.dict[key] = value
+
+    def sort(self):
+        self.acronyms = sorted(self.acronyms)
+        self.acronyms.reverse()
 
 class Unacronym():
 
@@ -67,7 +75,29 @@ class Unacronym():
 
                     output_file.write(updated_line)
 
+    def match_acronym(self, acronym):
+        """Returns none if no match, otherwise returns the matched def
+        """
+        for char in reverse(acronym):
+            pass
 
+    def build_dictionary(self):
+        with open(self.PREPROCESS_FILENAME, "r") as input_file:
+            for line in input_file:
+                words = line.split()
+
+                for word in words:
+                    self.__buffer.add(word)
+
+                    match = re.fullmatch("\(([A-Z][A-Za-z]*[A-Z])[)]*[:;?.,\"']*", word)
+                    if match is not None:
+                        acronym = match.group(1)
+                        definition = self.match_acronym(acronym)
+
+                        if definition is not None:
+                            self.acronyms.add(acronym, definition)
+
+        self.acronyms.sort() # TODO: sort by acronym length to do longest matching
 
     def replace_acronyms(self):
         with open(self.REPLACE_FILENAME, "w") as output_file:
@@ -76,8 +106,9 @@ class Unacronym():
 
                     updated_line = line
 
+                    # TODO: change color on acronyms that are not in the dictionary
                     for old, replacement in self.acronyms:
-                        updated_line = updated_line.replace(old, "<font color=\"red\">{}</font>".format(replacement))
+                        updated_line = re.sub("(^|[^>A-Z]){}([^<A-Z]|$)".format(old), r"\1>{}<\2".format(replacement), updated_line)
 
                     updated_line = updated_line.replace("\n", "<br />")
 

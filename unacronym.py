@@ -103,7 +103,6 @@ class Unacronym():
             # if the current word does not match and of the letters that have not been matched
             # and we have not failed to match a word for MAX_FAILED_MATCHES times
             if acronym_index < 0 and failed_matches <= MAX_FAILED_MATCHES:
-                definition = "{} {}".format(next_word, definition)
 
                 failed_matches = failed_matches + 1
                 buffer_index = buffer_index + 1
@@ -115,6 +114,7 @@ class Unacronym():
                     return None
 
                 # add the word to the def and go to the next word to try matching that
+                definition = "{} {}".format(next_word, definition)
                 next_word = self.__buffer.get_from_end(buffer_index)
 
             # ignore non letters at the beginning of the word
@@ -122,6 +122,7 @@ class Unacronym():
 
             # check if the test word's first letter matches the current index of the acronym
             if test_word.lower().startswith(acronym[acronym_index].lower()):
+
                 # reset the failed matches
                 failed_matches = 0
 
@@ -130,9 +131,6 @@ class Unacronym():
 
                 acronym_index = acronym_index - 1
                 buffer_index = buffer_index + 1
-
-                if not self.__buffer.is_index_from_end_in_bounds(buffer_index):
-                    return None
 
                 # add the matched word to the definition and go to the next word
                 definition = "{} {}".format(next_word, definition)
@@ -156,7 +154,7 @@ class Unacronym():
                 for word in words:
                     self.__buffer.add(word)
 
-                    match = re.fullmatch("\(([A-Z][A-Za-z]*[A-Z])[)]*([:;?.,]|(&quot)|(&#39))*", word)
+                    match = re.fullmatch("\(([A-Z][A-Za-z]*[A-Z])[s]?[)]*([:;?.,]|(&quot)|(&#39))*", word)
                     if match is not None:
                         acronym = match.group(1)
                         definition = self.match_acronym(acronym)

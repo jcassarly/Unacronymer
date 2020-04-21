@@ -44,18 +44,25 @@ class AcronymDict(list):
         return key in self.acronyms
 
     def add(self, key, value):
-        self.acronyms.append(key)
-        self.dict[key] = value
+        if not key in self:
+            self.acronyms.append(key)
+            self.dict[key] = value
 
     def sort(self):
         self.acronyms = sorted(self.acronyms)
         self.acronyms.reverse()
+
+class MatchState():
+    def __init__():
+        pass
 
 class Unacronym():
 
     INPUT_FILE_NAME = "/tmp/unacronym-in"
     PREPROCESS_FILENAME = "/tmp/unacronym-pre"
     REPLACE_FILENAME = "/tmp/unacronym-replace"
+
+    MAX_FAILED_MATCHES = 3
 
     REPLACE_DICT = {
 #        "&": "&amp",
@@ -84,13 +91,20 @@ class Unacronym():
 
                     output_file.write(updated_line)
 
-    def match_acronym(self, acronym):
+    def is_not_matching(self, last_matched_index, buffer_index, failed_matches):
+        return last_matched_index > 0 \
+               and self.__buffer.is_index_from_end_in_bounds(buffer_index) \
+               and failed_matches <= self.MAX_FAILED_MATCHES
+
+    def is_end_of_unmatched_word(self, acronym_index, failed_matches):
+        return acronym_index < 0 and failed_matches <= self.MAX_FAILED_MATCHES
+
+    def add_if_match(self, acronym):
         """Returns none if no match, otherwise returns the matched def
         """
         acronym_index = len(acronym) - 1
         last_matched_index = acronym_index # TODO: change this to be the length of the acronym not -1
         buffer_index = 1
-        MAX_FAILED_MATCHES = 3
         failed_matches = 0
         definition = ""
 
@@ -98,13 +112,11 @@ class Unacronym():
         next_word = self.__buffer.get_from_end(buffer_index)
 
         # iterate until a definition is found or acronym is found to not have a definiton
-        while last_matched_index > 0 \
-              and self.__buffer.is_index_from_end_in_bounds(buffer_index) \
-              and failed_matches <= MAX_FAILED_MATCHES:
+        while self.is_not_matching(last_matched_index, buffer_index, failed_matches):
 
             # if the current word does not match and of the letters that have not been matched
             # and we have not failed to match a word for MAX_FAILED_MATCHES times
-            if acronym_index < 0 and failed_matches <= MAX_FAILED_MATCHES:
+            if self.is_end_of_unmatched_word(acronym_index, failed_matches):
 
                 failed_matches = failed_matches + 1
                 buffer_index = buffer_index + 1
@@ -142,28 +154,21 @@ class Unacronym():
             else:
                 acronym_index = acronym_index - 1
 
-        # return the definition unless we did not find a complete definition match
-        return definition[0:len(definition) - 1] if last_matched_index == 0 else None
-
-
+        # add the definition only if we found a complete match
+        if last_matched_index == 0:
+            self.acronyms.add(acronym, definition[:-1])
 
     def build_dictionary(self):
         with io.open(self.PREPROCESS_FILENAME, "r", encoding=ENCODING) as input_file:
             for line in input_file:
-                words = line.split()
-
-                for word in words:
+                for word in line.split():
                     self.__buffer.add(word)
 
                     match = re.fullmatch("\(([A-Z][A-Za-z]*[A-Z])[s]?[)]*([:;?.,]|(&quot)|(&#39))*", word)
                     if match is not None:
-                        acronym = match.group(1)
-                        definition = self.match_acronym(acronym)
+                        self.add_if_match(match.group(1))
 
-                        if definition is not None and not acronym in self.acronyms:
-                            self.acronyms.add(acronym, definition)
-
-        self.acronyms.sort() # TODO: sort by acronym length to do longest matching
+        self.acronyms.sort()
 
     def replace_acronyms(self):
         with io.open(self.REPLACE_FILENAME, "w", encoding=ENCODING) as output_file:

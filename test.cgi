@@ -28,9 +28,10 @@ BEGIN {
     system("rm /tmp/unacronym-in")
     system("rm /tmp/unacronym-pre")
     system("rm /tmp/unacronym-replace")
+    system("rm /tmp/unacronym-error")
+
     print cgidat > "/tmp/unacronym-in"
-    #print "\ufffd" > "/tmp/unacronym-replace"
-    #close("/tmp/unacronym-replace")
+
     close("/tmp/unacronym-in")
     close("/tmp/unacronym-pre")
     close("/tmp/unacronym-replace")
@@ -51,9 +52,6 @@ BEGIN {
         system("mv /tmp/unacronym-error /tmp/unacronym-replace")
     }
 
-    #TODO: make sure to verify this file exists
-    #print "\ufffd" > "/tmp/unacronym-replace"
-    #close("/tmp/unacronym-replace")
     while (getline < "/tmp/unacronym-replace" > 0)
     {
         print $0

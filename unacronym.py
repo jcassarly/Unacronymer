@@ -1,164 +1,72 @@
 import urllib.parse
 import re
 import io
+from buffer import Buffer
+from ordered_dict import OrderedDict, AcronymDict
+from match_state import MatchState
 
 ENCODING = 'utf8'
 
-class Buffer():
-
-    SIZE = 256
-
-    def __init__(self):
-        self.__buffer = []
-
-    def add(self, new_item):
-        if len(self.__buffer) >= self.SIZE:
-            self.__buffer.pop(0)
-
-        self.__buffer.append(new_item)
-
-    def get(self, index):
-        return self.__buffer[index]
-
-    def is_index_from_end_in_bounds(self, index_from_end):
-        converted_index = len(self.__buffer) - 1 - index_from_end
-        return (converted_index >= 0 and converted_index < self.SIZE)
-
-    def get_from_end(self, index_from_end):
-        return self.__buffer[len(self.__buffer) - 1 - index_from_end]
-
-    def newest(self):
-        return self.__buffer[len(self.__buffer) - 1]
-
-class AcronymDict(list):
-
-    def __init__(self):
-        self.acronyms = []
-        self.dict = {}
-
-    def __iter__(self):
-        for acronym in self.acronyms:
-            yield acronym, self.dict[acronym]
-
-    def __contains__(self, key):
-        return key in self.acronyms
-
-    def add(self, key, value):
-        if not key in self:
-            self.acronyms.append(key)
-            self.dict[key] = value
-
-    def sort(self):
-        self.acronyms = sorted(self.acronyms)
-        self.acronyms.reverse()
-
-class MatchState():
-    def __init__():
-        pass
+REPLACE_DICT = OrderedDict()
+REPLACE_DICT.add("&", "&amp;")
+REPLACE_DICT.add("<", "&lt;")
+REPLACE_DICT.add(">", "&gt;")
+REPLACE_DICT.add("\"", "&quot;")
+REPLACE_DICT.add("\'", "&#39;")
 
 class Unacronym():
+    """Class to remove acronyms from the text in INPUT_FILE_NAME"""
 
     INPUT_FILE_NAME = "/tmp/unacronym-in"
     PREPROCESS_FILENAME = "/tmp/unacronym-pre"
     REPLACE_FILENAME = "/tmp/unacronym-replace"
 
-    MAX_FAILED_MATCHES = 3
-
-    REPLACE_DICT = {
-#        "&": "&amp",
-        "<": "&lt;",
-        ">": "&gt;",
-        "\"": "&quot;",
-        "\'": "&#39;",
-    }
-
     def __init__(self):
         self.__buffer = Buffer()
         self.acronyms = AcronymDict()
-        #self.acronyms.add("TCB", "TCP Control Block") # TODO: come back to this for how we want to sort the acronyms
-        #self.acronyms.add("TCP", "Transport Control Protocol")
 
     def preprocess(self):
+        """Prepreocess the data in INPUT_FILE_NAME to remove HTML injection and only display as plain text"""
         with io.open(self.PREPROCESS_FILENAME, "w", encoding=ENCODING) as output_file:
             with io.open(self.INPUT_FILE_NAME, "r", encoding=ENCODING) as input_file:
                 for line in input_file:
 
                     updated_line = urllib.parse.unquote_plus(line)
-                    updated_line = updated_line.replace("&", "&amp;")
 
-                    for old in self.REPLACE_DICT:
-                        updated_line = updated_line.replace(old, self.REPLACE_DICT[old])
+                    for old, replacement in REPLACE_DICT:
+                        updated_line = updated_line.replace(old, replacement)
 
                     output_file.write(updated_line)
 
-    def is_not_matching(self, last_matched_index, buffer_index, failed_matches):
-        return last_matched_index > 0 \
-               and self.__buffer.is_index_from_end_in_bounds(buffer_index) \
-               and failed_matches <= self.MAX_FAILED_MATCHES
+    def __define_if_match(self, acronym):
+        """Adds the acronym to the acronym dictionary if it has a matching definition
+        before it in the buffer
 
-    def is_end_of_unmatched_word(self, acronym_index, failed_matches):
-        return acronym_index < 0 and failed_matches <= self.MAX_FAILED_MATCHES
+        :param str acronym: the acronym to find a definition for
 
-    def add_if_match(self, acronym):
-        """Returns none if no match, otherwise returns the matched def
         """
-        acronym_index = len(acronym) - 1
-        last_matched_index = acronym_index # TODO: change this to be the length of the acronym not -1
-        buffer_index = 1
-        failed_matches = 0
-        definition = ""
-
-        # get the first word before the acronym in the buffer
-        next_word = self.__buffer.get_from_end(buffer_index)
+        state = MatchState(acronym, self.__buffer)
 
         # iterate until a definition is found or acronym is found to not have a definiton
-        while self.is_not_matching(last_matched_index, buffer_index, failed_matches):
+        while state.is_not_matching():
 
-            # if the current word does not match and of the letters that have not been matched
-            # and we have not failed to match a word for MAX_FAILED_MATCHES times
-            if self.is_end_of_unmatched_word(acronym_index, failed_matches):
+            if state.is_at_end_of_unmatched_word():
+                state.go_to_next_word(False)
 
-                failed_matches = failed_matches + 1
-                buffer_index = buffer_index + 1
-
-                # reset the current index to the index after the last successful match
-                acronym_index = last_matched_index - 1
-
-                if not self.__buffer.is_index_from_end_in_bounds(buffer_index):
-                    return None
-
-                # add the word to the def and go to the next word to try matching that
-                definition = "{} {}".format(next_word, definition)
-                next_word = self.__buffer.get_from_end(buffer_index)
-
-            # ignore non letters at the beginning of the word
-            test_word = re.sub("^(([^A-Za-z&])|(&amp)|(&lt)|(&gt)|(&quot)|(&#39))*", "", next_word)
-
-            # check if the test word's first letter matches the current index of the acronym
-            if test_word.lower().startswith(acronym[acronym_index].lower()):
-
-                # reset the failed matches
-                failed_matches = 0
-
-                # we matched at this index, so save that as the last matched
-                last_matched_index = acronym_index
-
-                acronym_index = acronym_index - 1
-                buffer_index = buffer_index + 1
-
-                # add the matched word to the definition and go to the next word
-                definition = "{} {}".format(next_word, definition)
-                next_word = self.__buffer.get_from_end(buffer_index)
+            # check if the next word's first letter matches the current index of the acronym
+            if state.does_next_letter_match():
+                state.go_to_next_word(True)
 
             # if we dont have a match, try again on the next letter in the acronym
             else:
-                acronym_index = acronym_index - 1
+                state.go_to_next_letter()
 
         # add the definition only if we found a complete match
-        if last_matched_index == 0:
-            self.acronyms.add(acronym, definition[:-1])
+        if state.has_found_match():
+            self.acronyms.add(acronym, state.get_definition())
 
     def build_dictionary(self):
+        """Build the acronym dictionary from the preprocessed data"""
         with io.open(self.PREPROCESS_FILENAME, "r", encoding=ENCODING) as input_file:
             for line in input_file:
                 for word in line.split():
@@ -166,18 +74,24 @@ class Unacronym():
 
                     match = re.fullmatch("\(([A-Z][A-Za-z]*[A-Z])[s]?[)]*([:;?.,]|(&quot)|(&#39))*", word)
                     if match is not None:
-                        self.add_if_match(match.group(1))
+                        self.__define_if_match(match.group(1))
 
+        # sort the acronyms so that longer ones come first - longer matches have priority
         self.acronyms.sort()
 
     def replace_acronyms(self):
+        """Replace the acronyms in the preprocessed data with those in the acronym dictionary
+
+        Outputs to REPLACE_FILENAME
+
+        """
         with io.open(self.REPLACE_FILENAME, "w", encoding=ENCODING) as output_file:
             with io.open(self.PREPROCESS_FILENAME, "r", encoding=ENCODING) as input_file:
                 for line in input_file:
 
                     updated_line = line
 
-                    # TODO: change color on acronyms that are not in the dictionary
+                    # replace each instance of an acronym with its definition
                     for old, replacement in self.acronyms:
                         updated_line = re.sub(r"(^|[^>A-Z]){}([^<A-Z]|$)".format(old), r"\1<font color='RED'>{} ({})</font>\2".format(replacement, old), updated_line)
 
@@ -189,7 +103,6 @@ class Unacronym():
 
 if __name__ == "__main__":
     ua = Unacronym()
-    #print(ua.match_acronym("TCP"))
     ua.preprocess()
     ua.build_dictionary()
     ua.replace_acronyms()

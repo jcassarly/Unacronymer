@@ -28,29 +28,19 @@ BEGIN {
     system("rm /tmp/unacronym-in")
     system("rm /tmp/unacronym-pre")
     system("rm /tmp/unacronym-replace")
-    system("rm /tmp/unacronym-error")
 
     print cgidat > "/tmp/unacronym-in"
 
     close("/tmp/unacronym-in")
     close("/tmp/unacronym-pre")
     close("/tmp/unacronym-replace")
-    close("/tmp/unacronym-error")
 
     print "<div class='column'>"
     print "  <H3 class='columnHead'>Output:</H3>"
     print "  <div class='outputtext'>"
     print "  <p>"
 
-    system("python3 /home/jwc160/public_html/cgi-bin/testdir/unacronym.py 2> /tmp/unacronym-error")
-
-    # if the python script exited in an error, override whatever was in the replace file to print the
-    # python scripts error
-    "ls -lt /tmp | grep unacronym-error" | getline
-    if ($5 > 0)
-    {
-        system("mv /tmp/unacronym-error /tmp/unacronym-replace")
-    }
+    system("python3 /home/jwc160/public_html/cgi-bin/testdir/unacronym.py")
 
     while (getline < "/tmp/unacronym-replace" > 0)
     {

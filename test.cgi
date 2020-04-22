@@ -13,7 +13,7 @@ BEGIN {
     print "<div class='column' >"
     print "  <H3 class='columnHead'>Enter text here:</H3>"
     print "  <form id='yeet' action='test.cgi' method='post'>"
-    print "    <textarea class='inputtext' name='in_text' placeholder='TEST ME'></textarea>"
+    print "    <textarea class='inputtext' name='in_text' placeholder='Enter text you want the acronyms translated to their meanings.  The text should define the acronyms <definiton> (<ACRONYM>)'></textarea>"
     print "  </form>"
     print "</div>"
 
